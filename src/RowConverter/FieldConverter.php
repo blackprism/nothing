@@ -2,9 +2,9 @@
 
 declare(strict_types = 1);
 
-namespace Blackprism\Nothing\RowConvertor;
+namespace Blackprism\Nothing\RowConverter;
 
-interface FieldConvertor
+interface FieldConverter
 {
     /**
      * @param mixed $value

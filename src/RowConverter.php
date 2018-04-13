@@ -4,18 +4,18 @@ declare(strict_types = 1);
 
 namespace Blackprism\Nothing;
 
-use Blackprism\Nothing\RowConvertor\FieldConvertor;
+use Blackprism\Nothing\RowConverter\FieldConverter;
 
 final class RowConverter
 {
     /**
-     * @var FieldConvertor[]
+     * @var FieldConverter[]
      */
-    private $fieldConvertors;
+    private $fieldConverters;
 
-    public function registerField(string $field, FieldConvertor $fieldConvertor)
+    public function registerField(string $field, FieldConverter $fieldConverter)
     {
-        $this->fieldConvertors[$field] = $fieldConvertor;
+        $this->fieldConverters[$field] = $fieldConverter;
     }
 
     private function convertFor(string $name, $value)
@@ -24,7 +24,7 @@ final class RowConverter
             return $value;
         }
 
-        return $this->fieldConvertors[$name]->convertFromDatabase($value);
+        return $this->fieldConverters[$name]->convertFromDatabase($value);
     }
 
     public function convert(array $row)
