@@ -1,6 +1,6 @@
 {
     "name": "blackprism/nothing",
-    "description": "Nothing is not a DataMapper but something close",
+    "description": "Nothing is not a DataMapper but something close to it",
     "type": "library",
     "require": {
         "php": ">= 7.1",
