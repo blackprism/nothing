@@ -4,27 +4,46 @@ declare(strict_types = 1);
 
 namespace Blackprism\Nothing;
 
-use Blackprism\Nothing\RowConverter\FieldConverter;
+use Doctrine\DBAL\Platforms\AbstractPlatform;
+use Doctrine\DBAL\Types\Type;
 
 final class RowConverter
 {
     /**
-     * @var FieldConverter[]
+     * @var string[]
      */
-    private $fieldConverters;
+    private $typeMappings;
 
-    public function registerField(string $field, FieldConverter $fieldConverter)
+    /**
+     * @var AbstractPlatform
+     */
+    private $platform;
+
+    public function __construct(AbstractPlatform $platform)
     {
-        $this->fieldConverters[$field] = $fieldConverter;
+        $this->platform = $platform;
     }
 
+    public function registerType(string $field, string $type)
+    {
+        $this->typeMappings[$field] = $type;
+    }
+
+    /**
+     * @param string $name
+     * @param $value
+     *
+     * @throws \Doctrine\DBAL\DBALException
+     *
+     * @return mixed
+     */
     private function convertFor(string $name, $value)
     {
-        if (isset($this->registered[$name]) === false) {
+        if (isset($this->typeMappings[$name]) === false) {
             return $value;
         }
 
-        return $this->fieldConverters[$name]->convertFromDatabase($value);
+        return Type::getType($this->typeMappings[$name])->convertToPHPValue($value, $this->platform);
     }
 
     public function convert(array $row)
