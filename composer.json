@@ -1,0 +1,20 @@
+{
+    "name": "blackprism/nothing",
+    "description": "Nothing is not a DataMapper but something close",
+    "type": "library",
+    "require": {
+        "php": ">= 7.1",
+        "doctrine/dbal": "^2.6"
+    },
+    "autoload": {
+        "psr-4" : {
+            "Blackprism\\Nothing\\": "src"
+        }
+    },
+    "authors": [
+        {
+            "name": "Sylvain Robez-Masson",
+            "email": "srm@bouh.org"
+        }
+    ]
+}
