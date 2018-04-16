@@ -129,16 +129,16 @@ User Object
 )
 ```
 
-### RowConvertor (Type mapping)
+### RowConverter (Type mapping)
 
-RowConvertor allows you to use [Doctrine DBAL Types](https://www.doctrine-project.org/projects/doctrine-dbal/en/latest/reference/types.html) to convert SQL types to PHP types
+RowConverter allows you to use [Doctrine DBAL Types](https://www.doctrine-project.org/projects/doctrine-dbal/en/latest/reference/types.html) to convert SQL types to PHP types
 
 Assuming you have this class
 ```php
 use Blackprism\Nothing\RowConverter;
 use Doctrine\DBAL\Platforms\AbstractPlatform;
 
-class UserRowConvertor
+class UserRowConverter
 {
     public function getRowConverter(AbstractPlatform $connection): RowConverter
     {
@@ -188,7 +188,7 @@ $queryBuilder
     ->from('user');
 $rows = $queryBuilder->execute();
 
-$rowConverter = (new UserRowConvertor())->getRowConverter($connection->getDatabasePlatform());
+$rowConverter = (new UserRowConverter())->getRowConverter($connection->getDatabasePlatform());
 
 $hydrator = new HydratorCallable();
 $rowsHydrated = $hydrator->map(
@@ -223,7 +223,7 @@ User Object
 )
 ```
 
-### RowConvertor (with custom type)
+### RowConverter (with custom type)
 
 Assuming you have this class
 ```php
@@ -259,7 +259,7 @@ use Blackprism\Nothing\RowConverter;
 use Doctrine\DBAL\Platforms\AbstractPlatform;
 use Doctrine\DBAL\Types\Type;
 
-class UserRowConvertor
+class UserRowConverter
 {
     public function __construct()
     {
@@ -287,7 +287,7 @@ $queryBuilder
     ->from('user');
 $rows = $queryBuilder->execute();
 
-$rowConverter = (new UserRowConvertor())->getRowConverter($connection->getDatabasePlatform());
+$rowConverter = (new UserRowConverter())->getRowConverter($connection->getDatabasePlatform());
 
 $hydrator = new HydratorCallable();
 $rowsHydrated = $hydrator->map(
