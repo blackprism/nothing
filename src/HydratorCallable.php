@@ -37,6 +37,6 @@ class HydratorCallable
      */
     public function mapReduce(iterable $rows, $data, callable $map, callable $reduce)
     {
-        return $reduce($map($rows, $data, $map), $data);
+        return $reduce($this->map($rows, $data, $map), $data);
     }
 }
