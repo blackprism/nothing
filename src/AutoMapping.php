@@ -18,7 +18,7 @@ class AutoMapping implements Hydrator\Mapper
      * @param AbstractPlatform $platform
      * @param EntityMapper[]   $mappings
      */
-    public function __construct(AbstractPlatform $platform, array $mappings)
+    public function __construct(AbstractPlatform $platform, iterable $mappings)
     {
         $this->platform = $platform;
 
@@ -30,7 +30,7 @@ class AutoMapping implements Hydrator\Mapper
             /**
              * @TODO Exception plus propre
              */
-            if ($mapping instanceof EntityMapper === false) {
+            if ($mapping instanceof EntityMapping === false) {
                 throw new \RuntimeException();
             }
 

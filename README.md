@@ -96,7 +96,7 @@ use Blackprism\Nothing\Hydrator\Mapper;
 
 class UserMapper implements Mapper
 {
-    public function map(array $row, $data)
+    public function map(iterable $row, iterable $data): iterable
     {
         $data[$row['id']] = new User($row['id'], $row['name']);
 
