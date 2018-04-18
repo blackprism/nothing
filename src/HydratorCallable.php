@@ -6,15 +6,7 @@ namespace Blackprism\Nothing;
 
 class HydratorCallable
 {
-    /**
-     * @param iterable          $rows
-     * @param mixed             $data
-     * @param callable          $map
-     * @param RowConverter|null $rowConverter
-     *
-     * @return mixed
-     */
-    public function map(iterable $rows, $data, callable $map, RowConverter $rowConverter = null)
+    public function map(iterable $rows, iterable $data, callable $map, RowConverter $rowConverter = null): iterable
     {
         foreach($rows as $row) {
             if ($rowConverter !== null) {
@@ -27,15 +19,7 @@ class HydratorCallable
         return $data;
     }
 
-    /**
-     * @param iterable $rows
-     * @param mixed    $data
-     * @param callable $map
-     * @param callable $reduce
-     *
-     * @return mixed
-     */
-    public function mapReduce(iterable $rows, $data, callable $map, callable $reduce)
+    public function mapReduce(iterable $rows, iterable $data, callable $map, callable $reduce)
     {
         return $reduce($this->map($rows, $data, $map), $data);
     }

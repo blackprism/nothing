@@ -9,15 +9,7 @@ use Blackprism\Nothing\Hydrator\Reducer;
 
 class Hydrator
 {
-    /**
-     * @param iterable          $rows
-     * @param mixed             $data
-     * @param Mapper            $map
-     * @param RowConverter|null $rowConverter
-     *
-     * @return mixed
-     */
-    public function map(iterable $rows, $data, Mapper $map, RowConverter $rowConverter = null)
+    public function map(iterable $rows, iterable $data, Mapper $map, RowConverter $rowConverter = null): iterable
     {
         foreach($rows as $row) {
             if ($rowConverter !== null) {
@@ -30,15 +22,7 @@ class Hydrator
         return $data;
     }
 
-    /**
-     * @param iterable $rows
-     * @param mixed    $data
-     * @param Mapper   $map
-     * @param Reducer  $reduce
-     *
-     * @return mixed
-     */
-    public function mapReduce(iterable $rows, $data, Mapper $map, Reducer $reduce)
+    public function mapReduce(iterable $rows, iterable $data, Mapper $map, Reducer $reduce): iterable
     {
         return $reduce->reduce($this->map($rows, $data, $map), $data);
     }

@@ -129,28 +129,11 @@ User Object
 )
 ```
 
-### RowConverter (Type mapping)
+### Type mapping
 
-RowConverter allows you to use [Doctrine DBAL Types](https://www.doctrine-project.org/projects/doctrine-dbal/en/latest/reference/types.html) to convert SQL types to PHP types
+Nothing new, it's [Doctrine DBAL Types](https://www.doctrine-project.org/projects/doctrine-dbal/en/latest/reference/types.html) to convert SQL types to PHP types
 
 Assuming you have this class
-```php
-use Blackprism\Nothing\RowConverter;
-use Doctrine\DBAL\Platforms\AbstractPlatform;
-
-class UserRowConverter
-{
-    public function getRowConverter(AbstractPlatform $connection): RowConverter
-    {
-        $rowConverter = new RowConverter($connection);
-        $rowConverter->registerType('last_updated', 'datetime'); // datetime is a type already in Doctrine DBAL Types 
-
-        return $rowConverter;
-    }
-}
-```
-
-and
 ```php
 class User
 {
@@ -181,6 +164,7 @@ class User
 You can do
 ```php
 use Blackprism\Nothing\HydratorCallable;
+use Doctrine\DBAL\Types\Type;
 
 // ... from previous example
 $queryBuilder
@@ -188,18 +172,21 @@ $queryBuilder
     ->from('user');
 $rows = $queryBuilder->execute();
 
-$rowConverter = (new UserRowConverter())->getRowConverter($connection->getDatabasePlatform());
+$platform = $connection->getDatabasePlatform();
 
 $hydrator = new HydratorCallable();
 $rowsHydrated = $hydrator->map(
     $rows,
     [] /* $data */,
-    function ($row, $data) {
-        $data[$row['id']] = new User($row['id'], $row['name'], $row['last_updated']);
+    function ($row, $data) use ($platform) {
+        $data[$row['id']] = new User(
+            $row['id'],
+            $row['name'],
+            Type::getType('datetime')->convertToPHPValue($row['last_updated'], $platform)
+        );
 
         return $data;
-    },
-    $rowConverter
+    }
 );
 
 foreach ($rowsHydrated as $userId => $user) {
@@ -223,7 +210,7 @@ User Object
 )
 ```
 
-### RowConverter (with custom type)
+### Custom type
 
 Assuming you have this class
 ```php
@@ -253,33 +240,10 @@ class PrefixStringType extends StringType
 }
 ```
 
-and
-```php
-use Blackprism\Nothing\RowConverter;
-use Doctrine\DBAL\Platforms\AbstractPlatform;
-use Doctrine\DBAL\Types\Type;
-
-class UserRowConverter
-{
-    public function __construct()
-    {
-        Type::addType('prefixed_string', PrefixStringType::class);
-    }
-
-    public function getRowConverter(AbstractPlatform $connection): RowConverter
-    {
-        $rowConverter = new RowConverter($connection);
-        $rowConverter->registerType('name', 'prefixed_string');
-        $rowConverter->registerType('last_updated', 'datetime'); // datetime is a type already in Doctrine DBAL Types 
-
-        return $rowConverter;
-    }
-}
-```
-
 You can do
 ```php
 use Blackprism\Nothing\HydratorCallable;
+use Doctrine\DBAL\Types\Type;
 
 // ... from previous example
 $queryBuilder
@@ -287,18 +251,21 @@ $queryBuilder
     ->from('user');
 $rows = $queryBuilder->execute();
 
-$rowConverter = (new UserRowConverter())->getRowConverter($connection->getDatabasePlatform());
+Type::addType('prefixed_string', PrefixStringType::class);
 
+$platform = $connection->getDatabasePlatform();
 $hydrator = new HydratorCallable();
 $rowsHydrated = $hydrator->map(
     $rows,
     [] /* $data */,
-    function ($row, $data) {
-        $data[$row['id']] = new User($row['id'], $row['name'], $row['last_updated']);
-
+    function ($row, $data) use ($platform) {
+        $data[$row['id']] = new User(
+            $row['id'],
+            Type::getType('prefixed_string')->convertToPHPValue($row['name'], $platform),
+            Type::getType('datetime')->convertToPHPValue($row['last_updated'], $platform)
+        );
         return $data;
-    },
-    $rowConverter
+    }
 );
 
 foreach ($rowsHydrated as $userId => $user) {
@@ -320,6 +287,97 @@ User Object
         )
 
 )
+```
+
+### AutoMapping
+
+Assuming you have this code
+```php
+use Blackprism\Nothing\EntityMapping;
+
+$user = new EntityMapping(
+    User::class,
+    [
+       'id'           => 'integer',
+       'name'         => 'string',
+       'last_updated' => 'datetime',
+    ]
+);
+```
+
+You can do
+```php
+use Blackprism\Nothing\AutoMapping;
+use Blackprism\Nothing\Hydrator;
+
+// ... from previous example
+$queryBuilder
+    ->select('id', 'name', 'last_updated')
+    ->from('user');
+$rows = $queryBuilder->execute();
+
+$hydrator = new Hydrator();
+$rowsHydrated = $hydrator->map(
+    $rows,
+    [] /* $data */,
+   new AutoMapping($connection->getDatabasePlatform(), [$user])
+);
+
+foreach ($rowsHydrated as $userId => $user) {
+    print_r($user);
+}
+```
+
+Output is
+```php
+User Object
+(
+    [id] => 1
+    [name] => prefixed Sylvain
+)
+```
+
+#### You can prefix the column
+```php
+use Blackprism\Nothing\AutoMapping;
+use Blackprism\Nothing\Hydrator;
+
+// ... from previous example
+$queryBuilder
+    ->select('id as user_id', 'name as user_name', 'last_updated as user_last_updated')
+    ->from('user');
+$rows = $queryBuilder->execute();
+
+$hydrator = new Hydrator();
+$rowsHydrated = $hydrator->map(
+    $rows,
+    [] /* $data */,
+   new AutoMapping($connection->getDatabasePlatform(), ['user_' => $user])
+);
+
+foreach ($rowsHydrated as $userId => $user) {
+    print_r($user);
+}
+```
+
+#### You can embed object into an other
+```php
+$author = new EntityMapping(
+    Author::class,
+    [
+        'id'   => 'integer',
+        'name' => 'string'
+    ]
+);
+
+$book = new EntityMapping(
+    Book::class,
+    [
+       'id'   => 'integer',
+       'name' => 'string',
+       Author::class => AutoMapping::SUB_OBJECT
+    ]
+);
 ```
 
 ### Sample
