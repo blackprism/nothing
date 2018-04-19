@@ -131,7 +131,8 @@ User Object
 
 ### Type mapping
 
-Nothing new, it's [Doctrine DBAL Types](https://www.doctrine-project.org/projects/doctrine-dbal/en/latest/reference/types.html) to convert SQL types to PHP types
+Almost nothing new, it's [Doctrine DBAL Types](https://www.doctrine-project.org/projects/doctrine-dbal/en/latest/reference/types.html) to convert SQL types to PHP types
+But, you have a TypeConverter that's a wrapper to convert your type more easily.
 
 Assuming you have this class
 ```php
@@ -164,7 +165,7 @@ class User
 You can do
 ```php
 use Blackprism\Nothing\HydratorCallable;
-use Doctrine\DBAL\Types\Type;
+use Blackprism\Nothing\TypeConverter;
 
 // ... from previous example
 $queryBuilder
@@ -172,17 +173,17 @@ $queryBuilder
     ->from('user');
 $rows = $queryBuilder->execute();
 
-$platform = $connection->getDatabasePlatform();
+$typeConverter = new TypeConverter($connection->getDatabasePlatform());
 
 $hydrator = new HydratorCallable();
 $rowsHydrated = $hydrator->map(
     $rows,
     [] /* $data */,
-    function ($row, $data) use ($platform) {
+    function ($row, $data) use ($typeConverter) {
         $data[$row['id']] = new User(
             $row['id'],
             $row['name'],
-            Type::getType('datetime')->convertToPHPValue($row['last_updated'], $platform)
+            $typeConverter->convertToPHP($row['last_updated'], 'datetime')
         );
 
         return $data;
