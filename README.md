@@ -296,7 +296,7 @@ Assuming you have this code
 ```php
 use Blackprism\Nothing\EntityMapping;
 
-$user = new EntityMapping(
+$userMapping = new EntityMapping(
     User::class,
     [
        'id'           => 'integer',
@@ -321,7 +321,7 @@ $hydrator = new Hydrator();
 $rowsHydrated = $hydrator->map(
     $rows,
     [] /* $data */,
-   new AutoMapping($connection->getDatabasePlatform(), [$user])
+   new AutoMapping($connection->getDatabasePlatform(), [$userMapping])
 );
 
 foreach ($rowsHydrated as $userId => $user) {
