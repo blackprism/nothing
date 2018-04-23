@@ -66,10 +66,15 @@ You can do
 ```php
 // ... from previous example
 $rows = $queryBuilder->execute();
-$rowsHydrated = $rows->fetchAll();
-array_walk($rowsHydrated, function (&$row) {
-    $row = new User($row['id'], $row['name']);
-});
+$rowsHydrated = array_map(
+    function ($row) {
+        return new User(
+            $row['id'],
+            $row['name']
+        );
+    },
+    $rows->fetchAll()
+);
 
 foreach ($rowsHydrated as $userId => $user) {
     print_r($user);
@@ -249,14 +254,16 @@ $rows = $queryBuilder->execute();
 Type::addType('prefixed_string', PrefixStringType::class);
 $typeConverter = new TypeConverter($connection->getDatabasePlatform());
 
-$rowsHydrated = $rows->fetchAll();
-array_walk($rowsHydrated, function (&$row) use ($typeConverter) {
-    $row = new User(
-        $row['id'],
-        $typeConverter->convertToPHP($row['name'], 'prefixed_string'),
-        $typeConverter->convertToPHP($row['last_updated'], 'datetime')
-    );
-});
+$rowsHydrated = array_map(
+    function ($row) use ($typeConverter) {
+        return new User(
+            $row['id'],
+            $typeConverter->convertToPHP($row['name'], 'prefixed_string'),
+            $typeConverter->convertToPHP($row['last_updated'], 'datetime')
+        );
+    },
+    $rows->fetchAll()
+);
 
 foreach ($rowsHydrated as $userId => $user) {
     print_r($user);
