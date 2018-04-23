@@ -7,7 +7,7 @@ namespace Blackprism\Nothing;
 use Doctrine\DBAL\Platforms\AbstractPlatform;
 use Doctrine\DBAL\Types\Type;
 
-class AutoMapping implements Hydrator\Mapper
+class AutoMapping
 {
     public const SUB_OBJECT = 'sub_object';
 
@@ -16,7 +16,7 @@ class AutoMapping implements Hydrator\Mapper
 
     /**
      * @param AbstractPlatform $platform
-     * @param EntityMapper[]   $mappings
+     * @param EntityMapping[]  $mappings
      */
     public function __construct(AbstractPlatform $platform, iterable $mappings)
     {
@@ -69,14 +69,30 @@ class AutoMapping implements Hydrator\Mapper
     }
 
     /**
-     * @param iterable $row
-     * @param iterable $data
+     * @param iterable $rows
      *
      * @throws \Doctrine\DBAL\DBALException
      *
-     * @return iterable
+     * @return \ArrayObject
      */
-    public function map(iterable $row, iterable $data): iterable
+    public function map(iterable $rows): \ArrayObject
+    {
+        $collection = new \ArrayObject();
+
+        foreach ($rows as $row) {
+            $this->mapRow($row, $collection);
+        }
+
+        return $collection;
+    }
+
+    /**
+     * @param iterable     $row
+     * @param \ArrayObject $collection
+     *
+     * @throws \Doctrine\DBAL\DBALException
+     */
+    private function mapRow(iterable $row, \ArrayObject $collection)
     {
         $found   = false;
         $tmpData = [];
@@ -107,8 +123,6 @@ class AutoMapping implements Hydrator\Mapper
             }
         }
 
-        $data[] = $tmpData;
-
-        return $data;
+        $collection->append($tmpData);
     }
 }

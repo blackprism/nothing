@@ -36,7 +36,9 @@ Array
 )
 ```
 
-### Hydrator Callable
+### How to hydrate (without class)
+
+Nothing to learn, it's pure PHP, do how you want.
 
 Assuming you have this class
 ```php
@@ -62,16 +64,11 @@ class User
 
 You can do
 ```php
-use Blackprism\Nothing\HydratorCallable;
-
 // ... from previous example
 $rows = $queryBuilder->execute();
-
-$hydrator = new HydratorCallable();
-$rowsHydrated = $hydrator->map($rows, [] /* $data */, function ($row, $data) {
-    $data[$row['id']] = new User($row['id'], $row['name']);
-
-    return $data;
+$rowsHydrated = $rows->fetchAll();
+array_walk($rowsHydrated, function (&$row) {
+    $row = new User($row['id'], $row['name']);
 });
 
 foreach ($rowsHydrated as $userId => $user) {
@@ -88,32 +85,34 @@ User Object
 )
 ```
 
-### Hydrator
+### How to hydrate (with class)
+
+Nothing to learn, it's pure PHP, do how you want.
 
 Assuming you have this class
 ```php
-use Blackprism\Nothing\Hydrator\Mapper;
-
-class UserMapper implements Mapper
+class UserMapper
 {
-    public function map(iterable $row, iterable $data): iterable
+    public function map(iterable $rows): \ArrayObject
     {
-        $data[$row['id']] = new User($row['id'], $row['name']);
+        $collection = new \ArrayObject();
 
-        return $data;
+        foreach ($rows as $row) {
+            $collection->append(new User($row['id'], $row['name']));
+        }
+
+        return $collection;
     }
 }
 ```
 
 You can do
 ```php
-use Blackprism\Nothing\Hydrator;
-
 // ... from previous example
 $rows = $queryBuilder->execute();
 
-$hydrator = new Hydrator();
-$rowsHydrated = $hydrator->map($rows, [] /* $data */, new UserMapper());
+$userMapper = new UserMapper();
+$rowsHydrated = $userMapper->map($rows);
 
 foreach ($rowsHydrated as $userId => $user) {
     print_r($user);
@@ -164,7 +163,6 @@ class User
 
 You can do
 ```php
-use Blackprism\Nothing\HydratorCallable;
 use Blackprism\Nothing\TypeConverter;
 
 // ... from previous example
@@ -175,20 +173,14 @@ $rows = $queryBuilder->execute();
 
 $typeConverter = new TypeConverter($connection->getDatabasePlatform());
 
-$hydrator = new HydratorCallable();
-$rowsHydrated = $hydrator->map(
-    $rows,
-    [] /* $data */,
-    function ($row, $data) use ($typeConverter) {
-        $data[$row['id']] = new User(
-            $row['id'],
-            $row['name'],
-            $typeConverter->convertToPHP($row['last_updated'], 'datetime')
-        );
-
-        return $data;
-    }
-);
+$rowsHydrated = $rows->fetchAll();
+array_walk($rowsHydrated, function (&$row) use ($typeConverter) {
+    $row = new User(
+        $row['id'],
+        $row['name'],
+        $typeConverter->convertToPHP($row['last_updated'], 'datetime')
+    );
+});
 
 foreach ($rowsHydrated as $userId => $user) {
     print_r($user);
@@ -243,7 +235,7 @@ class PrefixStringType extends StringType
 
 You can do
 ```php
-use Blackprism\Nothing\HydratorCallable;
+use Blackprism\Nothing\TypeConverter;
 use Doctrine\DBAL\Types\Type;
 
 // ... from previous example
@@ -253,21 +245,16 @@ $queryBuilder
 $rows = $queryBuilder->execute();
 
 Type::addType('prefixed_string', PrefixStringType::class);
+$typeConverter = new TypeConverter($connection->getDatabasePlatform());
 
-$platform = $connection->getDatabasePlatform();
-$hydrator = new HydratorCallable();
-$rowsHydrated = $hydrator->map(
-    $rows,
-    [] /* $data */,
-    function ($row, $data) use ($platform) {
-        $data[$row['id']] = new User(
-            $row['id'],
-            Type::getType('prefixed_string')->convertToPHPValue($row['name'], $platform),
-            Type::getType('datetime')->convertToPHPValue($row['last_updated'], $platform)
-        );
-        return $data;
-    }
-);
+$rowsHydrated = $rows->fetchAll();
+array_walk($rowsHydrated, function (&$row) use ($typeConverter) {
+    $row = new User(
+        $row['id'],
+        $typeConverter->convertToPHP($row['name'], 'prefixed_string'),
+        $typeConverter->convertToPHP($row['last_updated'], 'datetime')
+    );
+});
 
 foreach ($rowsHydrated as $userId => $user) {
     print_r($user);
@@ -309,7 +296,6 @@ $userMapping = new EntityMapping(
 You can do
 ```php
 use Blackprism\Nothing\AutoMapping;
-use Blackprism\Nothing\Hydrator;
 
 // ... from previous example
 $queryBuilder
@@ -317,12 +303,8 @@ $queryBuilder
     ->from('user');
 $rows = $queryBuilder->execute();
 
-$hydrator = new Hydrator();
-$rowsHydrated = $hydrator->map(
-    $rows,
-    [] /* $data */,
-   new AutoMapping($connection->getDatabasePlatform(), [$userMapping])
-);
+$autoMapping = new AutoMapping($connection->getDatabasePlatform(), [$userMapping]);
+$rowsHydrated = $autoMapping->map($rows);
 
 foreach ($rowsHydrated as $userId => $user) {
     print_r($user);
@@ -331,17 +313,25 @@ foreach ($rowsHydrated as $userId => $user) {
 
 Output is
 ```php
-User Object
+Array
 (
-    [id] => 1
-    [name] => prefixed Sylvain
+    [User] => User Object
+        (
+            [id] => 2
+            [name] => François
+            [lastUpdated] => DateTime Object
+                (
+                    [date] => 2018-04-23 00:00:00.000000
+                    [timezone_type] => 3
+                    [timezone] => UTC
+                )
+        )
 )
 ```
 
 #### You can prefix the column
 ```php
 use Blackprism\Nothing\AutoMapping;
-use Blackprism\Nothing\Hydrator;
 
 // ... from previous example
 $queryBuilder
@@ -349,12 +339,8 @@ $queryBuilder
     ->from('user');
 $rows = $queryBuilder->execute();
 
-$hydrator = new Hydrator();
-$rowsHydrated = $hydrator->map(
-    $rows,
-    [] /* $data */,
-   new AutoMapping($connection->getDatabasePlatform(), ['user_' => $user])
-);
+$autoMapping = new AutoMapping($connection->getDatabasePlatform(), ['user_' => $userMapping]);
+$rowsHydrated = $autoMapping->map($rows);
 
 foreach ($rowsHydrated as $userId => $user) {
     print_r($user);

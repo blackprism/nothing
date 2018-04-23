@@ -9,6 +9,8 @@ use Doctrine\DBAL\Types\Type;
 
 class TypeConverter
 {
+    private $platform;
+
     public function __construct(AbstractPlatform $platform)
     {
         $this->platform = $platform;
