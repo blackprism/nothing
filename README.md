@@ -68,10 +68,7 @@ You can do
 $rows = $queryBuilder->execute();
 $rowsHydrated = array_map(
     function ($row) {
-        return new User(
-            $row['id'],
-            $row['name']
-        );
+        return new User($row['id'], $row['name']);
     },
     $rows->fetchAll()
 );
