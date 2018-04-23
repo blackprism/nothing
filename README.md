@@ -173,14 +173,16 @@ $rows = $queryBuilder->execute();
 
 $typeConverter = new TypeConverter($connection->getDatabasePlatform());
 
-$rowsHydrated = $rows->fetchAll();
-array_walk($rowsHydrated, function (&$row) use ($typeConverter) {
-    $row = new User(
-        $row['id'],
-        $row['name'],
-        $typeConverter->convertToPHP($row['last_updated'], 'datetime')
-    );
-});
+$rowsHydrated = array_map(
+    function ($row) use ($typeConverter) {
+        return new User(
+            $row['id'],
+            $row['name'],
+            $typeConverter->convertToPHP($row['last_updated'], 'datetime')
+        );
+    },
+    $rows->fetchAll()
+);
 
 foreach ($rowsHydrated as $userId => $user) {
     print_r($user);
