@@ -38,7 +38,7 @@ class AutoMapping
                 'class'             => $mapping->getClass(),
                 'alias'             => $alias,
                 'parameters'        => $mapping->getParameters(),
-                'alternativeBuilds' => $mapping->getAlternativeBuilds()
+                'namedConstructors' => $mapping->getNamedConstructors()
             ];
         }
 
@@ -48,7 +48,7 @@ class AutoMapping
     private function resolveDependencies()
     {
         /**
-         * @TODO resolve dependencies for alternative build
+         * @TODO resolve dependencies for named constructors
          */
         do {
             $updated = false;
@@ -105,7 +105,7 @@ class AutoMapping
             $values = $this->mapRowForParameters($row, $mapping['parameters'], $mapping['alias'], $tmpData);
 
             if ($values === []) {
-                foreach ($mapping['alternativeBuilds'] as $method => $parameters) {
+                foreach ($mapping['namedConstructors'] as $method => $parameters) {
                     $values = $this->mapRowForParameters($row, $parameters, $mapping['alias'], $tmpData);
                     if ($values !== []) {
                         break;

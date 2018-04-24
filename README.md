@@ -373,7 +373,7 @@ $bookMapping = new EntityMapping(
 );
 ```
 
-#### You can add alternative build
+#### You can add named constructor
 ```php
 
 $bookMapping = new EntityMapping(
