@@ -8,6 +8,7 @@ class EntityMapping
 {
     private $class;
     private $parameters;
+    private $alternativeBuilds = [];
 
     public function __construct(string $class, array $parameters)
     {
@@ -23,5 +24,15 @@ class EntityMapping
     public function getParameters(): array
     {
         return $this->parameters;
+    }
+
+    public function buildWith(string $method, array $parameters)
+    {
+        $this->alternativeBuilds[$method] = $parameters;
+    }
+
+    public function getAlternativeBuilds(): array
+    {
+        return $this->alternativeBuilds;
     }
 }

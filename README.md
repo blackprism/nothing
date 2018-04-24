@@ -355,7 +355,7 @@ foreach ($rowsHydrated as $userId => $user) {
 
 #### You can embed object into an other
 ```php
-$author = new EntityMapping(
+$authorMapping = new EntityMapping(
     Author::class,
     [
         'id'   => 'integer',
@@ -363,7 +363,7 @@ $author = new EntityMapping(
     ]
 );
 
-$book = new EntityMapping(
+$bookMapping = new EntityMapping(
     Book::class,
     [
        'id'   => 'integer',
@@ -371,6 +371,32 @@ $book = new EntityMapping(
        Author::class => AutoMapping::SUB_OBJECT
     ]
 );
+```
+
+#### You can add alternative build
+```php
+
+$bookMapping = new EntityMapping(
+    Book::class,
+    [
+       'id'   => 'integer',
+       'name' => 'string'
+    ]
+);
+
+$bookMapping->buildWith(
+    'withAuthor',
+    [
+        'id'   => 'integer',
+        'name' => 'string',
+        Author::class => AutoMapping::SUB_OBJECT
+    ]
+);
+```
+
+AutoMapping will do :
+```php
+Book::withAuthor($row['id'], $row['name'], new Author(...
 ```
 
 ### Sample

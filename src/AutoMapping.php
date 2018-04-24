@@ -35,9 +35,10 @@ class AutoMapping
             }
 
             $this->mappings[] = [
-                'class'      => $mapping->getClass(),
-                'alias'      => $alias,
-                'parameters' => $mapping->getParameters()
+                'class'             => $mapping->getClass(),
+                'alias'             => $alias,
+                'parameters'        => $mapping->getParameters(),
+                'alternativeBuilds' => $mapping->getAlternativeBuilds()
             ];
         }
 
@@ -46,6 +47,9 @@ class AutoMapping
 
     private function resolveDependencies()
     {
+        /**
+         * @TODO resolve dependencies for alternative build
+         */
         do {
             $updated = false;
 
@@ -87,42 +91,67 @@ class AutoMapping
     }
 
     /**
-     * @param iterable     $row
+     * @param array        $row
      * @param \ArrayObject $collection
      *
      * @throws \Doctrine\DBAL\DBALException
      */
-    private function mapRow(iterable $row, \ArrayObject $collection)
+    private function mapRow(array $row, \ArrayObject $collection)
     {
-        $found   = false;
         $tmpData = [];
+        $method  = null;
 
         foreach ($this->mappings as $mapping) {
-            $values = [];
+            $values = $this->mapRowForParameters($row, $mapping['parameters'], $mapping['alias'], $tmpData);
 
-            foreach ($mapping['parameters'] as $name => $type) {
-                $nameAliased = $mapping['alias'] . $name;
-
-                if ($type !== static::SUB_OBJECT && isset($row[$nameAliased]) === false) {
-                    $found = false;
-                    break;
+            if ($values === []) {
+                foreach ($mapping['alternativeBuilds'] as $method => $parameters) {
+                    $values = $this->mapRowForParameters($row, $parameters, $mapping['alias'], $tmpData);
+                    if ($values !== []) {
+                        break;
+                    }
                 }
-
-                if ($type === static::SUB_OBJECT && isset($tmpData[$name]) === true) {
-                    $values[] = $tmpData[$name];
-                    unset($tmpData[$name]);
-                } elseif ($type !== static::SUB_OBJECT) {
-                    $values[] = Type::getType($type)->convertToPHPValue($row[$nameAliased], $this->platform);
-                }
-
-                $found = true;
             }
 
-            if ($found === true) {
-                $tmpData[$mapping['class']] = new $mapping['class'](...$values);
+            if ($values !== []) {
+                if ($method === null) {
+                    $tmpData[$mapping['class']] = new $mapping['class'](...$values);
+                } else {
+                    $tmpData[$mapping['class']] = $mapping['class']::$method(...$values);
+                }
             }
         }
 
         $collection->append($tmpData);
+    }
+
+    private function mapRowForParameters(iterable $row, array $parameters, $alias, &$data)
+    {
+        $values = [];
+        $found = false;
+
+        foreach ($parameters as $name => $type) {
+            $nameAliased = $alias . $name;
+
+            if ($type !== static::SUB_OBJECT && isset($row[$nameAliased]) === false) {
+                $found = false;
+                break;
+            }
+
+            if ($type === static::SUB_OBJECT && isset($tmpData[$name]) === true) {
+                $values[] = $data[$name];
+                unset($data[$name]);
+            } elseif ($type !== static::SUB_OBJECT) {
+                $values[] = Type::getType($type)->convertToPHPValue($row[$nameAliased], $this->platform);
+            }
+
+            $found = true;
+        }
+
+        if ($found === false) {
+            $values = [];
+        }
+
+        return $values;
     }
 }
