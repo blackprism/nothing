@@ -12,6 +12,10 @@ class AutoMapping
     public const SUB_OBJECT = 'sub_object';
 
     private $platform;
+
+    /**
+     * @var array
+     */
     private $mappings;
 
     /**
@@ -35,31 +39,32 @@ class AutoMapping
             }
 
             $this->mappings[] = [
-                'class'             => $mapping->getClass(),
-                'alias'             => $alias,
-                'parameters'        => $mapping->getParameters(),
-                'namedConstructors' => $mapping->getNamedConstructors()
+                'class'        => $mapping->getClass(),
+                'alias'        => $alias,
+                'constructors' => $mapping->getConstructors()
             ];
         }
 
         $this->resolveDependencies();
     }
 
+    /**
+     * @TODO better algo
+     */
     private function resolveDependencies()
     {
-        /**
-         * @TODO resolve dependencies for named constructors
-         */
         do {
             $updated = false;
 
             foreach ($this->mappings as $index => $mapping) {
                 $dependencyIndex = null;
                 foreach ($this->mappings as $searchedIndex => $searchedMapping) {
-                    if (isset($searchedMapping['parameters'][$mapping['class']]) === true
-                        && $searchedMapping['parameters'][$mapping['class']] === static::SUB_OBJECT) {
-                        $dependencyIndex = $searchedIndex;
-                        break;
+                    foreach ($searchedMapping['constructors'] as $constructor) {
+                        if (isset($constructor['parameters'][$mapping['class']]) === true
+                            && $constructor['parameters'][$mapping['class']] === static::SUB_OBJECT) {
+                            $dependencyIndex = $searchedIndex;
+                            break 2;
+                        }
                     }
                 }
 
@@ -102,22 +107,20 @@ class AutoMapping
         $method  = null;
 
         foreach ($this->mappings as $mapping) {
-            $values = $this->mapRowForParameters($row, $mapping['parameters'], $mapping['alias'], $tmpData);
+            $values = [];
 
-            if ($values === []) {
-                foreach ($mapping['namedConstructors'] as $method => $parameters) {
-                    $values = $this->mapRowForParameters($row, $parameters, $mapping['alias'], $tmpData);
-                    if ($values !== []) {
-                        break;
-                    }
+            foreach ($mapping['constructors'] as $constructor) {
+                $values = $this->mapRowForParameters($row, $constructor['parameters'], $mapping['alias'], $tmpData);
+                if ($values !== []) {
+                    break;
                 }
             }
 
             if ($values !== []) {
-                if ($method === null) {
+                if ($constructor['method'] === null) {
                     $tmpData[$mapping['class']] = new $mapping['class'](...$values);
                 } else {
-                    $tmpData[$mapping['class']] = $mapping['class']::$method(...$values);
+                    $tmpData[$mapping['class']] = $mapping['class']::{$constructor['method']}(...$values);
                 }
             }
         }
@@ -138,7 +141,7 @@ class AutoMapping
                 break;
             }
 
-            if ($type === static::SUB_OBJECT && isset($tmpData[$name]) === true) {
+            if ($type === static::SUB_OBJECT && isset($data[$name]) === true) {
                 $values[] = $data[$name];
                 unset($data[$name]);
             } elseif ($type !== static::SUB_OBJECT) {

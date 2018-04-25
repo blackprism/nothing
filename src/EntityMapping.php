@@ -8,12 +8,13 @@ class EntityMapping
 {
     private $class;
     private $parameters;
-    private $namedConstructors = [];
+    private $constructors = [];
+    private $sorted = false;
 
     public function __construct(string $class, array $parameters)
     {
         $this->class      = $class;
-        $this->parameters = $parameters;
+        $this->constructors[] = ['method' => null, 'parameters' => $parameters];
     }
 
     public function getClass(): string
@@ -21,18 +22,27 @@ class EntityMapping
         return $this->class;
     }
 
-    public function getParameters(): array
+    public function buildWith(string $method, array $parameters): void
     {
-        return $this->parameters;
+        $this->sorted = false;
+        $this->constructors[] = ['method' => $method, 'parameters' => $parameters];
     }
 
-    public function buildWith(string $method, array $parameters)
+    public function getConstructors(): array
     {
-        $this->namedConstructors[$method] = $parameters;
+        if ($this->sorted === false) {
+            $this->sortConstructorsWithMaxParametersFirst();
+        }
+
+        return $this->constructors;
     }
 
-    public function getNamedConstructors(): array
+    private function sortConstructorsWithMaxParametersFirst(): bool
     {
-        return $this->namedConstructors;
+        $this->sorted = true;
+
+        return uasort($this->constructors, function ($a, $b) {
+            return count($b['parameters']) <=> count($a['parameters']);
+        });
     }
 }
