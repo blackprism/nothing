@@ -38,7 +38,7 @@ Array
 
 ### How to hydrate (without class)
 
-Nothing to learn, it's pure PHP, do how you want.
+Nothing to learn, it's pure PHP, do like you want.
 
 Assuming you have this class
 ```php
