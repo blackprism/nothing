@@ -7,7 +7,6 @@ namespace Blackprism\Nothing;
 class EntityMapping
 {
     private $class;
-    private $parameters;
     private $constructors = [];
     private $sorted = false;
 
