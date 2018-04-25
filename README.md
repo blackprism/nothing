@@ -399,6 +399,17 @@ AutoMapping will do :
 Book::withAuthor($row['id'], $row['name'], new Author(...
 ```
 
+#### AutoAlias helper
+When you build your query you'll often use alias like this :
+```php
+$queryBuilder->select('book.id as book_id', 'book.name as book_name', 'author.id as author_id', 'author.name as author_name')
+```
+
+AutoAlias help you to make this easier :
+```php
+$queryBuilder->select((new AutoAlias)('book.id', 'book.name', 'author.id', 'author.name'))
+```
+
 ### Sample
 
 https://github.com/blackprism/nothing-sample
