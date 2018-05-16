@@ -4,14 +4,11 @@ declare(strict_types = 1);
 
 namespace Blackprism\Nothing;
 
-use Doctrine\DBAL\Platforms\AbstractPlatform;
-use Doctrine\DBAL\Types\Type;
-
 class AutoMapping
 {
     public const SUB_OBJECT = 'sub_object';
 
-    private $platform;
+    private $typeConverter;
 
     /**
      * @var array
@@ -19,12 +16,12 @@ class AutoMapping
     private $mappings;
 
     /**
-     * @param AbstractPlatform $platform
-     * @param EntityMapping[]  $mappings
+     * @param TypeConverter   $typeConverter
+     * @param EntityMapping[] $mappings
      */
-    public function __construct(AbstractPlatform $platform, iterable $mappings)
+    public function __construct(TypeConverter $typeConverter, iterable $mappings)
     {
-        $this->platform = $platform;
+        $this->typeConverter = $typeConverter;
 
         foreach ($mappings as $alias => $mapping) {
             if (is_string($alias) === false) {
@@ -145,7 +142,7 @@ class AutoMapping
                 $values[] = $data[$name];
                 unset($data[$name]);
             } elseif ($type !== static::SUB_OBJECT) {
-                $values[] = Type::getType($type)->convertToPHPValue($row[$nameAliased], $this->platform);
+                $values[] = $this->typeConverter->convertToPHP($row[$nameAliased], $type);
             }
 
             $found = true;

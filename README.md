@@ -302,6 +302,7 @@ $userMapping = new EntityMapping(
 You can do
 ```php
 use Blackprism\Nothing\AutoMapping;
+use Blackprism\Nothing\TypeConverter;
 
 // ... from previous example
 $queryBuilder
@@ -309,7 +310,7 @@ $queryBuilder
     ->from('user');
 $rows = $queryBuilder->execute();
 
-$autoMapping = new AutoMapping($connection->getDatabasePlatform(), [$userMapping]);
+$autoMapping = new AutoMapping(new TypeConverter($connection->getDatabasePlatform()), [$userMapping]);
 $rowsHydrated = $autoMapping->map($rows);
 
 foreach ($rowsHydrated as $userId => $user) {
